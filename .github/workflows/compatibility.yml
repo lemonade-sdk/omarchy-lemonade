@@ -1,0 +1,101 @@
+name: Lemonade compatibility
+run-name: Lemonade ${{ inputs.release || github.event.client_payload.release || 'latest' }}
+on:
+  workflow_dispatch:
+    inputs:
+      release:
+        description: Stable Lemonade release tag (latest resolves the current stable release)
+        default: latest
+        required: true
+        type: string
+  repository_dispatch:
+    types: [lemonade-release]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: compatibility-${{ inputs.release || github.event.client_payload.release || 'latest' }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    outputs:
+      tag: ${{ steps.resolve.outputs.tag }}
+    steps:
+      - id: resolve
+        uses: actions/github-script@v8
+        env:
+          REQUESTED_RELEASE: ${{ inputs.release || github.event.client_payload.release || 'latest' }}
+        with:
+          script: |
+            const tag = process.env.REQUESTED_RELEASE;
+            if (tag !== 'latest' && !/^v\d+\.\d+\.\d+$/.test(tag)) throw new Error('Expected a stable release tag');
+            const repo = {owner: 'lemonade-sdk', repo: 'lemonade'};
+            const {data} = tag === 'latest'
+              ? await github.rest.repos.getLatestRelease(repo)
+              : await github.rest.repos.getReleaseByTag({...repo, tag});
+            if (data.draft || data.prerelease || !/^v\d+\.\d+\.\d+$/.test(data.tag_name)) throw new Error('Not a published stable release');
+            core.setOutput('tag', data.tag_name);
+            core.summary.addRaw(`Testing published Lemonade release ${data.tag_name}.`);
+            await core.summary.write();
+      - name: Report hardware configuration
+        env:
+          HARDWARE_RUNNERS: ${{ vars.HARDWARE_RUNNERS }}
+        run: |
+          if [ -z "$HARDWARE_RUNNERS" ]; then echo 'Hardware runners are not configured.' >> "$GITHUB_STEP_SUMMARY"; fi
+
+  api:
+    needs: release
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      LEMONADE_RELEASE: ${{ needs.release.outputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+      LEMONADE_URL: http://127.0.0.1:13389
+      LEMONADE_API_KEY: compatibility-test-key
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r tests/requirements.txt
+      - name: Test the shipped QML client against the release binary
+        run: python tests/release_smoke.py
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: server-log-${{ needs.release.outputs.tag }}
+          path: .test-results/
+
+  hardware:
+    needs: [release, api]
+    if: >-
+      github.ref == 'refs/heads/main' && vars.HARDWARE_RUNNERS != ''
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: ${{ fromJSON(vars.HARDWARE_RUNNERS || '[{"name":"unconfigured","labels":["ubuntu-latest"]}]') }}
+    name: ${{ matrix.runner.name }}
+    runs-on: ${{ matrix.runner.labels }}
+    timeout-minutes: 30
+    concurrency:
+      group: omarchy-hardware-${{ matrix.runner.name }}
+      cancel-in-progress: false
+    env:
+      LEMONADE_RELEASE: ${{ needs.release.outputs.tag }}
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          persist-credentials: false
+      - name: Prepare the dedicated test server
+        run: /usr/local/bin/omarchy-lemonade-prepare-release "$LEMONADE_RELEASE"
+      - name: Test client and accelerator model lifecycle
+        run: |
+          : "${LEMONADE_TEST_MODEL:?Configure a preinstalled model on the dedicated runner}"
+          : "${LEMONADE_TEST_DEVICE:?Configure gpu or npu on the dedicated runner}"
+          python -m unittest discover -s tests -p 'test_*.py' -v
+          python tests/live.py
+      - name: Exercise the plugin in the running Omarchy session
+        run: python tests/shell_smoke.py

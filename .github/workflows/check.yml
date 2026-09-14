@@ -1,0 +1,32 @@
+name: Plugin checks
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - run: pip install -r tests/requirements.txt
+      - name: Test the QML client
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Test release discovery
+        run: node --test tests/watch-releases.test.cjs
+      - name: Validate with Omarchy's own validator
+        env:
+          OMARCHY_REVISION: b679363bed05415771a1b1dc92c6899a908236f7
+        run: |
+          curl --fail --location --retry 3 "https://raw.githubusercontent.com/omacom/omarchy/$OMARCHY_REVISION/bin/omarchy-plugin-validate" -o "$RUNNER_TEMP/omarchy-plugin-validate"
+          bash "$RUNNER_TEMP/omarchy-plugin-validate" .
+      - name: Parse all QML files
+        run: |
+          for file in *.qml; do pyside6-qmlformat "$file" >/dev/null; done
