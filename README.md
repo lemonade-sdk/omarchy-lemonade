@@ -1,5 +1,7 @@
 # Lemonade for Omarchy
 
+> **Under testing:** This plugin is still being tested on Omarchy. Publication to the official Omarchy plugin store is pending; it is not listed there yet.
+
 [![Plugin checks](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/check.yml/badge.svg)](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/check.yml)
 [![Lemonade compatibility](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/compatibility.yml/badge.svg)](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/compatibility.yml)
 
