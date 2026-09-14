@@ -4,6 +4,8 @@
 
 `check.yml` runs the real `Controller.qml` and `Request.qml` through Qt against a local HTTP fixture. It covers authentication, health/models responses, load/unload forwarding, errors, timeouts, cancellation, reconnects, URL validation, and release comparison. It parses all QML and uses Omarchy's own manifest validator at a pinned upstream revision. These tests do not simulate a rendered Omarchy desktop.
 
+Node tests check first-run decisions and connection-setting validation. Linux tests execute the actual setup script with fixture package/service commands, covering read-only probing, cancellation, failed installation, existing running services, and user-service preference. They do not install system packages on CI hosts.
+
 ## Every Lemonade release
 
 `watch-releases.yml` polls the official release feed every six hours. It discovers all stable releases since this repository was created, plus the latest stable release for the initial baseline. Successful or active runs for a tag are skipped; failed runs are retried. GitHub schedules can be delayed, so this is eventual detection, not an immediate release hook.
@@ -58,3 +60,5 @@ After adding hardware, manually dispatch the latest release once: the watcher wi
 ## Manual desktop acceptance
 
 Before declaring desktop support validated, check theme changes, horizontal/vertical bars, multi-monitor placement, click and keyboard navigation, scrolling a long model list, Escape, popup switching, browser launch, shell restart, and removal. Verify that stopping/restarting Lemonade reconnects, and that removing the plugin leaves the server and model cache intact.
+
+For first-run acceptance, use a fresh Omarchy VM or test account: install the plugin before Lemonade, cancel the Install prompt once, then complete it. Verify the terminal remains available on failure, the panel connects after success, and model downloads open the existing app. Also test an installed/stopped service, an already-running user service, a remote URL, a wrong API key, and editing/cancelling/saving connection settings with the keyboard. Package installation and the real Omarchy form still require this desktop test.

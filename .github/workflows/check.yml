@@ -23,8 +23,10 @@ jobs:
       - run: pip install -r tests/requirements.txt
       - name: Test the QML client
         run: python -m unittest discover -s tests -p 'test_*.py' -v
-      - name: Test release discovery
-        run: node --test tests/watch-releases.test.cjs
+      - name: Test onboarding and release discovery
+        run: node --test tests/*.test.cjs
+      - name: Check setup command syntax
+        run: bash -n scripts/local-server.sh
       - name: Validate with Omarchy's own validator
         env:
           OMARCHY_REVISION: b679363bed05415771a1b1dc92c6899a908236f7

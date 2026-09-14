@@ -86,8 +86,11 @@ class ControllerTests(unittest.TestCase):
         self.client.start()
         self.assertFalse(self.client.get("online"))
         self.assertIn("Authentication", self.client.get("error"))
+        self.assertTrue(self.client.get("healthChecked"))
+        self.assertEqual(self.client.get("healthStatus"), 401)
         self.client.set("apiKey", "test-key")
         self.client.wait(lambda: self.client.get("online"))
+        self.assertEqual(self.client.get("healthStatus"), 200)
 
     def test_model_actions_are_forwarded(self):
         self.client.start()

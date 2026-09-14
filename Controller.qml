@@ -15,6 +15,8 @@ Item {
     property string actionError: ""
     property string modelsError: ""
     property string latestVersion: ""
+    property bool healthChecked: false
+    property int healthStatus: 0
     readonly property bool online: health !== null
     readonly property bool refreshing: healthRequest.busy || modelsRequest.busy
     readonly property bool busy: actionRequest.busy
@@ -26,6 +28,8 @@ Item {
         modelsRequest.cancel();
         actionRequest.cancel();
         health = null;
+        healthChecked = false;
+        healthStatus = 0;
         models = [];
         error = "";
         actionError = "";
@@ -41,6 +45,7 @@ Item {
         try {
             url = Api.baseUrl(baseUrl);
         } catch (failure) {
+            healthChecked = true;
             error = failure.message;
             return;
         }
@@ -108,6 +113,8 @@ Item {
         id: healthRequest
         timeoutMs: root.requestTimeoutMs
         onFinished: function (data, failure) {
+            root.healthStatus = healthRequest.responseStatus;
+            root.healthChecked = true;
             try {
                 if (failure)
                     throw new Error(failure);

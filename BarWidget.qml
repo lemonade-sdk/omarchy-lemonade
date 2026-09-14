@@ -21,8 +21,8 @@ Ui.BarWidget {
     }
     function open() {
         panel.open();
-        if (client)
-            client.refresh();
+        if (service)
+            service.refresh();
     }
     function close() {
         panel.close();
@@ -56,10 +56,10 @@ Ui.BarWidget {
         text: root.vertical ? "🍋" : "🍋 " + (root.client && root.client.online ? "Lemonade" : "Offline")
         tooltipText: root.client && root.client.online ? "Lemonade " + root.client.health.version + " · " + root.client.loadedModels.length + " loaded" : "Lemonade: " + (root.client ? root.client.error : "connecting")
         onPressed: function (mouseButton) {
-            if (mouseButton === Qt.RightButton && root.service)
+            if (mouseButton === Qt.RightButton && root.service && root.client && root.client.online)
                 root.service.openApp();
-            else if (mouseButton === Qt.MiddleButton && root.client)
-                root.client.refresh();
+            else if (mouseButton === Qt.MiddleButton && root.service)
+                root.service.refresh();
             else
                 root.toggle();
         }

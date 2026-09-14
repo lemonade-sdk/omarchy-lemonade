@@ -5,6 +5,7 @@ Item {
     property var xhr: null
     readonly property bool busy: xhr !== null
     property int timeoutMs: 10000
+    property int responseStatus: 0
     signal finished(var data, string error)
 
     function cancel() {
@@ -19,12 +20,14 @@ Item {
 
     function send(method, url, token, body) {
         cancel();
+        responseStatus = 0;
         var request = new XMLHttpRequest();
         xhr = request;
         request.onreadystatechange = function () {
             if (root.xhr !== request || request.readyState !== XMLHttpRequest.DONE)
                 return;
             deadline.stop();
+            root.responseStatus = request.status;
             root.xhr = null;
             if (request.status < 200 || request.status >= 300) {
                 root.finished(null, request.status === 401 || request.status === 403 ? "Authentication failed. Check the API key in the shell environment." : request.status === 0 ? "Cannot reach Lemonade." : "Request failed (HTTP " + request.status + "). Open Lemonade for details.");
