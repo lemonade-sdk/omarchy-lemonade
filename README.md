@@ -1,5 +1,8 @@
 # Lemonade for Omarchy
 
+[![Plugin checks](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/check.yml/badge.svg)](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/check.yml)
+[![Lemonade compatibility](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/compatibility.yml/badge.svg)](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/compatibility.yml)
+
 A thin [Omarchy](https://omarchy.org/) Quattro plugin for [Lemonade](https://github.com/lemonade-sdk/lemonade).
 
 The bar shows server availability. Its panel lists installed models and forwards load/unload requests to Lemonade. **Open Lemonade** launches the server's existing web app for chat, downloads, backend setup, and every other feature.

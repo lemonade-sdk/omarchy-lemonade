@@ -49,27 +49,32 @@ def main():
     try:
         run("omarchy", "plugin", "validate", str(destination))
         run("omarchy-shell", "shell", "rescanPlugins")
-        run("omarchy", "plugin", "enable", PLUGIN_ID)
-        run(
-            "omarchy",
-            "bar",
-            "set",
-            PLUGIN_ID,
-            "baseUrl",
-            os.environ.get("LEMONADE_URL", "http://localhost:13305"),
-        )
-        run("omarchy", "bar", "set", PLUGIN_ID, "checkUpdates", "false", "--json")
+        enable()
         wait_online()
         run("omarchy-shell", "shell", "summon", PLUGIN_ID, "{}")
         run("omarchy-shell", "shell", "hide", PLUGIN_ID)
         run("omarchy", "plugin", "disable", PLUGIN_ID)
-        run("omarchy", "plugin", "enable", PLUGIN_ID)
+        enable()
         wait_online()
         print(
             "Omarchy plugin installed, connected, accepted panel IPC, and re-enabled successfully"
         )
     finally:
         run("omarchy", "plugin", "remove", PLUGIN_ID, "--yes")
+
+
+def enable():
+    run("omarchy", "plugin", "enable", PLUGIN_ID)
+    run(
+        "omarchy",
+        "bar",
+        "set",
+        PLUGIN_ID,
+        "baseUrl",
+        os.environ.get("LEMONADE_URL", "http://localhost:13305"),
+    )
+    run("omarchy", "bar", "set", PLUGIN_ID, "checkUpdates", "false", "--json")
+    run("omarchy", "bar", "set", PLUGIN_ID, "apiKeyEnv", "LEMONADE_API_KEY")
 
 
 if __name__ == "__main__":
