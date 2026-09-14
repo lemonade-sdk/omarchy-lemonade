@@ -71,7 +71,7 @@ Item {
     }
 
     function appUrl() {
-        return Api.baseUrl(baseUrl) + "/app";
+        return Api.baseUrl(baseUrl) + "/";
     }
 
     onBaseUrlChanged: reset()

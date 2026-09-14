@@ -20,13 +20,18 @@ class Handler(BaseHTTPRequestHandler):
     def reply(self):
         state = self.server.state
         body = self.rfile.read(int(self.headers.get("Content-Length", "0")))
-        state["requests"].append((self.command, self.path, self.headers.get("Authorization"), body))
+        state["requests"].append(
+            (self.command, self.path, self.headers.get("Authorization"), body)
+        )
         code = 200
         if self.headers.get("Authorization") != "Bearer test-key":
             code, result = 401, {"error": "unauthorized"}
         elif self.path == "/v1/health":
-            result = {"status": "ok", "version": state["version"],
-                      "all_models_loaded": [{"model_name": name} for name in state["loaded"]]}
+            result = {
+                "status": "ok",
+                "version": state["version"],
+                "all_models_loaded": [{"model_name": name} for name in state["loaded"]],
+            }
             if state.get("delay"):
                 time.sleep(state["delay"])
             if state.get("invalid"):
@@ -72,7 +77,9 @@ class ControllerTests(unittest.TestCase):
         self.assertTrue(self.client.get("online"))
         self.assertEqual(self.client.get("health")["version"], "11.9.0")
         self.assertEqual(self.client.get("models")[0]["id"], "test-model")
-        self.assertTrue(all(row[2] == "Bearer test-key" for row in self.server.state["requests"]))
+        self.assertTrue(
+            all(row[2] == "Bearer test-key" for row in self.server.state["requests"])
+        )
 
     def test_authentication_failure_and_reconnect(self):
         self.client.set("apiKey", "wrong")
@@ -87,10 +94,15 @@ class ControllerTests(unittest.TestCase):
         self.client.call("changeModel", "load", "test-model")
         self.client.wait(lambda: len(self.client.get("loadedModels")) == 1)
         self.client.call("changeModel", "unload", "test-model")
-        self.client.wait(lambda: len(self.client.get("loadedModels")) == 0 and not self.client.get("busy"))
+        self.client.wait(
+            lambda: len(self.client.get("loadedModels")) == 0
+            and not self.client.get("busy")
+        )
         requests = [row for row in self.server.state["requests"] if row[0] == "POST"]
         self.assertEqual([row[1] for row in requests], ["/v1/load", "/v1/unload"])
-        self.assertTrue(all(json.loads(row[3]) == {"model_name": "test-model"} for row in requests))
+        self.assertTrue(
+            all(json.loads(row[3]) == {"model_name": "test-model"} for row in requests)
+        )
 
     def test_empty_model_cannot_unload_everything(self):
         self.client.start()
@@ -140,6 +152,7 @@ class ControllerTests(unittest.TestCase):
         self.client.set("baseUrl", url + "/api/v1/")
         self.client.start()
         self.assertTrue(self.client.get("online"))
+        self.assertEqual(self.client.result("appUrl"), url + "/")
         self.client.set("baseUrl", "file:///etc/passwd")
         self.client.wait(lambda: bool(self.client.get("error")))
         self.assertFalse(self.client.get("online"))

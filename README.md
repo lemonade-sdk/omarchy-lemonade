@@ -34,7 +34,7 @@ omarchy bar set io.github.lemonade-sdk.lemonade checkUpdates false --json
 | Setting | Default | Meaning |
 | --- | --- | --- |
 | `baseUrl` | `http://localhost:13305` | Server URL; an optional `/v1` or `/api/v1` suffix is normalized |
-| `apiKeyEnv` | `LEMONADE_API_KEY` | Name of the environment variable containing this server's API key |
+| `apiKeyEnv` | Admin key, then regular key | Override the key variable name; otherwise prefer `LEMONADE_ADMIN_API_KEY`, then `LEMONADE_API_KEY` |
 | `pollSeconds` | `15` | Status refresh interval, minimum 5 seconds |
 | `checkUpdates` | `true` | Check GitHub for the latest stable Lemonade release at activation and hourly |
 

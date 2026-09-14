@@ -14,7 +14,7 @@ Item {
         id: client
         active: root.settings !== null
         baseUrl: root.settings && root.settings.baseUrl ? String(root.settings.baseUrl) : "http://localhost:13305"
-        apiKey: Quickshell.env(root.settings && root.settings.apiKeyEnv ? String(root.settings.apiKeyEnv) : "LEMONADE_API_KEY") || ""
+        apiKey: root.settings && root.settings.apiKeyEnv ? Quickshell.env(String(root.settings.apiKeyEnv)) || "" : Quickshell.env("LEMONADE_ADMIN_API_KEY") || Quickshell.env("LEMONADE_API_KEY") || ""
         pollSeconds: root.settings && Number(root.settings.pollSeconds) > 0 ? Number(root.settings.pollSeconds) : 15
         checkUpdates: !root.settings || root.settings.checkUpdates !== false
     }
