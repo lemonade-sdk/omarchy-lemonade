@@ -47,9 +47,10 @@ exec 9>"${XDG_RUNTIME_DIR:?No desktop runtime directory}/omarchy-lemonade-setup.
 flock -n 9 || { printf 'Another Lemonade setup is already running.\n'; exit 1; }
 
 if [[ $action == install ]]; then
-    command -v pacman >/dev/null 2>&1 || { printf 'This setup requires Arch Linux.\n'; exit 1; }
-    printf 'Install Lemonade using pacman and enable its service at startup.\n'
-    printf 'This performs the full system upgrade required by Arch (sudo pacman -Syu --needed lemonade-server).\n'
+    command -v omarchy-pkg-add >/dev/null 2>&1 || { printf 'This setup requires Omarchy.\n'; exit 1; }
+    printf 'Install Lemonade and enable its service at startup.\n'
+    printf "Omarchy's package helper installs it (omarchy pkg add lemonade-server).\n"
+    printf 'System upgrades are left to omarchy update.\n'
 else
     installed || { printf 'Lemonade is not installed. Use Install Lemonade first.\n'; exit 1; }
     printf 'Start the existing Lemonade service. No running service will be restarted.\n'
@@ -58,7 +59,7 @@ read -r -p 'Continue? [y/N] ' answer || exit 0
 [[ $answer == y || $answer == Y ]] || { printf 'Cancelled.\n'; exit 0; }
 
 if [[ $action == install ]]; then
-    sudo pacman -Syu --needed lemonade-server
+    omarchy-pkg-add lemonade-server
 fi
 
 if active --user || active; then

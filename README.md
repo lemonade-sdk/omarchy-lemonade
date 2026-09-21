@@ -1,7 +1,5 @@
 # Lemonade for Omarchy
 
-> **Under testing:** This plugin is still being tested on Omarchy. Publication to the official Omarchy plugin store is pending; it is not listed there yet.
-
 [![Plugin checks](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/check.yml/badge.svg)](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/check.yml)
 [![Lemonade compatibility](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/compatibility.yml/badge.svg)](https://github.com/lemonade-sdk/omarchy-lemonade/actions/workflows/compatibility.yml)
 
@@ -21,7 +19,7 @@ Requires Omarchy's Quattro shell with the built-in bar. Custom replacement bars 
    omarchy plugin add https://github.com/lemonade-sdk/omarchy-lemonade.git --enable
    ```
 
-2. Click the lemon in the bar. If Lemonade is missing, choose **Install Lemonade**. A terminal explains the package installation and system upgrade, asks for confirmation, and runs `sudo pacman -Syu --needed lemonade-server`. Pacman handles installation and dependencies; the script enables the packaged service if no Lemonade service is already running.
+2. Click the lemon in the bar. If Lemonade is missing, choose **Install Lemonade**. A terminal explains the package installation, asks for confirmation, and runs `omarchy pkg add lemonade-server`. Omarchy's package helper handles installation and dependencies; the script enables the packaged service if no Lemonade service is already running.
 3. If Lemonade is already installed but stopped, choose **Start Lemonade**. This starts an existing service without reinstalling, restarting, or enabling it at boot. An already-enabled user service takes precedence over the system service.
 4. After setup, the panel connects automatically; **Refresh** / `R` retries immediately. Choose **Open Lemonade** to download models and configure backends in the existing app.
 
@@ -90,4 +88,4 @@ Keep virtual environments outside the plugin checkout: Omarchy rejects plugin di
 
 No server source, model catalog, backend rules, package-management implementation, or inference implementation is copied here. API additions belong upstream in Lemonade.
 
-Apache-2.0 licensed. Initial release: hardware/session validation is pending runner provisioning.
+Apache-2.0 licensed. Hardware-runner validation is pending runner provisioning.

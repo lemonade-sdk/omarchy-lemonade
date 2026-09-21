@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.0
+
+- Install delegates to Omarchy's package helper (`omarchy pkg add lemonade-server`) instead of running a pacman system upgrade, which Omarchy's update guard aborts whenever the system has pending updates.
+- System upgrades are left to `omarchy update`, matching first-party Omarchy installers.
+- Linux command tests assert the setup script never combines pacman sync and sysupgrade, a state CI cannot reach because the guard hook is absent from containers.
+
 ## 0.2.0
 
 - First-run Install/Start controls delegate to pacman and the existing Lemonade systemd service with terminal confirmation.

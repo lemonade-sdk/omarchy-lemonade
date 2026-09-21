@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import subprocess
 import tempfile
 import unittest
@@ -39,6 +40,13 @@ class LocalServerTests(unittest.TestCase):
             """
 if [[ $1 == -Q ]]; then [[ $INSTALLED == 1 ]]; exit; fi
 printf 'pacman %s\n' "$*" >> "$COMMAND_LOG"
+[[ $PACMAN_FAIL == 0 ]]
+""",
+        )
+        self.stub(
+            "omarchy-pkg-add",
+            """
+printf 'omarchy-pkg-add %s\n' "$*" >> "$COMMAND_LOG"
 [[ $PACMAN_FAIL == 0 ]]
 """,
         )
@@ -97,11 +105,27 @@ esac
         self.assertEqual(self.run_action("install", "n\n\n").returncode, 0)
         self.assertEqual(self.commands(), "")
 
-    def test_install_delegates_to_pacman_and_packaged_service(self):
+    def test_install_delegates_to_omarchy_and_packaged_service(self):
         result = self.run_action("install")
         self.assertEqual(result.returncode, 0, result.stderr)
-        self.assertIn("sudo pacman -Syu --needed lemonade-server", self.commands())
+        self.assertIn("omarchy-pkg-add lemonade-server", self.commands())
         self.assertIn("sudo systemctl enable --now lemond.service", self.commands())
+
+    def test_install_never_requests_a_system_upgrade(self):
+        """Omarchy's update guard aborts any pacman transaction combining -S and -u.
+
+        The guard hook is absent from CI containers, so assert on the command
+        shape rather than waiting for a real desktop to reject the transaction.
+        """
+        script = (ROOT / "scripts/local-server.sh").read_text()
+        self.assertNotIn("--sysupgrade", script)
+        for flags in re.findall(r"pacman\s+(-[A-Za-z]+)", script):
+            self.assertFalse(
+                "S" in flags and "u" in flags,
+                f"local-server.sh must not run a system upgrade: found 'pacman {flags}'",
+            )
+        self.assertEqual(self.run_action("install").returncode, 0)
+        self.assertNotIn("-Syu", self.commands())
 
     def test_failed_install_never_starts_service(self):
         self.env["PACMAN_FAIL"] = "1"
