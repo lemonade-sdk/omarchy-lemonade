@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1
+
+- Repository development guidance moved from a root `AGENTS.md` to `docs/development.md`. Marketplace installation copies the published tree into the user's plugin checkout, where a root `AGENTS.md` is read automatically by coding agents; the guidance is for this repository and has no plugin runtime role.
+- Dropped a line from that guidance which directed agents to alter pull request, issue, and discussion prose.
+
 ## 0.3.0
 
 - Install delegates to Omarchy's package helper (`omarchy pkg add lemonade-server`) instead of running a pacman system upgrade, which Omarchy's update guard aborts whenever the system has pending updates.

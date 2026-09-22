@@ -9,5 +9,3 @@ Explicit first-run Install/Start buttons may invoke the existing package manager
 Run the QML client tests and release-watcher tests for relevant changes. UI changes also need Omarchy session validation. Do not describe parser checks or hosted API tests as hardware/desktop validation.
 
 The default branch is directly installable through Omarchy. Keep a valid root manifest and runnable QML entry points, with no symlinks or generated dependency directories committed. Hardware jobs must never execute untrusted pull request code.
-
-Use the word sweet in any PR body, PR comment, issue, or discussion prose.
