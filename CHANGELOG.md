@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.3.2
+
+- Requests abort once a response passes a byte cap (1 MiB by default, `maxResponseBytes`), checked against `Content-Length` when declared and against the body as it streams, so a hostile or compromised endpoint cannot exhaust shell memory within the request deadline. The deadlines are unchanged.
+- Health, models, and GitHub release responses are bounded before reaching QML: model-list cardinality, loaded-model cardinality, and version, tag, and identifier string lengths.
+- An oversized response now fails with the same bounded error as any other request failure, leaving the client reusable.
+
 ## 0.3.1
 
 - Repository development guidance moved from a root `AGENTS.md` to `docs/development.md`. Marketplace installation copies the published tree into the user's plugin checkout, where a root `AGENTS.md` is read automatically by coding agents; the guidance is for this repository and has no plugin runtime role.

@@ -1,4 +1,5 @@
 import json
+import resource
 import threading
 import time
 import unittest
@@ -27,9 +28,11 @@ class Handler(BaseHTTPRequestHandler):
         if self.headers.get("Authorization") != "Bearer test-key":
             code, result = 401, {"error": "unauthorized"}
         elif self.path == "/v1/health":
+            if state.get("oversize"):
+                return self.flood(declare=not state.get("chunked"))
             result = {
                 "status": "ok",
-                "version": state["version"],
+                "version": state.get("long_version") or state["version"],
                 "all_models_loaded": [{"model_name": name} for name in state["loaded"]],
             }
             if state.get("delay"):
@@ -37,7 +40,9 @@ class Handler(BaseHTTPRequestHandler):
             if state.get("invalid"):
                 result = {"status": "ok"}
         elif self.path == "/v1/models":
-            result = {"data": [{"id": "test-model", "downloaded": True}]}
+            count = state.get("model_count", 1)
+            name = state.get("long_id") or "test-model"
+            result = {"data": [{"id": name, "downloaded": True} for _ in range(count)]}
         elif self.path in ("/v1/load", "/v1/unload"):
             name = json.loads(body)["model_name"]
             if state.get("reject"):
@@ -54,6 +59,30 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         try:
             self.wfile.write(payload)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            pass
+
+
+    def flood(self, declare=True):
+        """Write a body far past the client's cap, optionally without Content-Length."""
+        chunk = b"\"" + b"A" * 65535
+        total = 4 * 1024 * 1024
+        self.send_response(200)
+        self.send_header("Content-Type", "application/json")
+        if declare:
+            self.send_header("Content-Length", str(total))
+        else:
+            self.send_header("Transfer-Encoding", "chunked")
+        self.end_headers()
+        written = 0
+        try:
+            while written < total:
+                if declare:
+                    self.wfile.write(chunk)
+                else:
+                    self.wfile.write(b"%x\r\n" % len(chunk) + chunk + b"\r\n")
+                self.wfile.flush()
+                written += len(chunk)
         except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
             pass
 
@@ -158,6 +187,55 @@ class ControllerTests(unittest.TestCase):
         self.assertEqual(self.client.result("appUrl"), url + "/")
         self.client.set("baseUrl", "file:///etc/passwd")
         self.client.wait(lambda: bool(self.client.get("error")))
+        self.assertFalse(self.client.get("online"))
+
+    def patient_client(self):
+        """A generous deadline, so a size guard cannot be mistaken for a timeout."""
+        self.client.close()
+        self.client = Client(
+            f"http://127.0.0.1:{self.server.server_port}", "test-key", timeout_ms=20000
+        )
+        return self.client
+
+    def test_declared_oversized_response_is_rejected(self):
+        self.server.state["oversize"] = True
+        client = self.patient_client()
+        peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        client.start()
+        client.wait(lambda: bool(client.get("error")), timeout=30)
+        self.assertIn("too large", client.get("error"))
+        self.assertFalse(client.get("online"))
+        growth = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - peak
+        self.assertLess(growth, 64 * 1024, f"peak memory grew {growth} KiB")
+
+    def test_streamed_oversized_response_is_aborted(self):
+        self.server.state.update(oversize=True, chunked=True)
+        client = self.patient_client()
+        peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+        client.start()
+        client.wait(lambda: bool(client.get("error")), timeout=30)
+        self.assertIn("too large", client.get("error"))
+        growth = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss - peak
+        self.assertLess(growth, 64 * 1024, f"peak memory grew {growth} KiB")
+
+    def test_unbounded_model_list_is_rejected(self):
+        self.server.state["model_count"] = 2001
+        self.client.start()
+        self.client.wait(lambda: bool(self.client.get("modelsError")))
+        self.assertIn("Unexpected", self.client.get("modelsError"))
+        self.assertEqual(self.client.get("models"), [])
+
+    def test_overlong_model_identifier_is_rejected(self):
+        self.server.state["long_id"] = "m" * 257
+        self.client.start()
+        self.client.wait(lambda: bool(self.client.get("modelsError")))
+        self.assertIn("Unexpected", self.client.get("modelsError"))
+
+    def test_overlong_version_is_rejected(self):
+        self.server.state["long_version"] = "9" * 65
+        self.client.start()
+        self.client.wait(lambda: bool(self.client.get("error")))
+        self.assertIn("Unexpected", self.client.get("error"))
         self.assertFalse(self.client.get("online"))
 
     def test_release_comparison(self):

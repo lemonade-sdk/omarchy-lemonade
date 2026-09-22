@@ -154,8 +154,11 @@ Item {
     Request {
         id: releaseRequest
         onFinished: function (data, failure) {
-            if (!failure && data && !data.prerelease && !data.draft && typeof data.tag_name === "string")
-                root.latestVersion = data.tag_name;
+            if (failure)
+                return;
+            var tag = Api.releaseTag(data);
+            if (tag)
+                root.latestVersion = tag;
         }
     }
 }
