@@ -76,7 +76,7 @@ node --test tests/*.test.cjs
 omarchy plugin validate .
 ```
 
-Keep virtual environments outside the plugin checkout: Omarchy rejects plugin directories containing symlinks. The QML client tests run without Omarchy on Windows or Linux; rendering and shell lifecycle tests require a real Omarchy session. See [testing](docs/testing.md) for coverage and remaining manual checks.
+Keep virtual environments outside the plugin checkout: Omarchy rejects plugin directories containing symlinks. The QML client tests run without Omarchy on Windows or Linux; rendering and shell lifecycle tests require a real Omarchy session. See [testing](docs/testing.md) for coverage and remaining manual checks, and [development guidance](docs/development.md) for what belongs in this repository rather than upstream in Lemonade.
 
 ## Layout
 
